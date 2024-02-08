@@ -1,12 +1,18 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required
+from itsdangerous import URLSafeTimedSerializer
+
 from dotenv import load_dotenv
 import os
 import langchain as lc
-from langchain_community.chat_models import ChatOpenAI
+
+from langchain_openai import ChatOpenAI
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
 
 load_dotenv()
+
 
 key = os.getenv("OPENAI_API_KEY")
 from openai import OpenAI
@@ -16,59 +22,32 @@ client = OpenAI()
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:5173"])
 
+# TODO: LOGIN AND SIGNUP
+
 system_msg = "You are an expert data analyst."
-prompt = "Suggest some data analysis questions and ideas for feature engineering."
+prompt = "Suggest some data analysis questions and ideas about the dataset for feature engineering."
 
 
-@app.route("/")
-def hello_world():
-    return "Hello, World!"
+# @app.route("/")
+# def hello_world():
+#     return "Hello, World!"
 
 
-def check_existing_user(username):
-    # Check if the username already exists in the file
-    with open("login_info.txt", "r") as f:
-        for line in f:
-            if username in line:
-                return True
-    return False
+# def check_existing_user(username):
+#     # Check if the username already exists in the file
+#     with open("login_info.txt", "r") as f:
+#         for line in f:
+#             if username in line:
+#                 return True
+#     return False
 
 
-@app.route("/login", methods=["POST"])
-def login():
-    # Extract login information from the request
-    username = request.form.get("username")
-    password = request.form.get("password")
-
-    # Write login information to a file
-    with open("login_info.txt", "a") as f:
-        f.write(f"Username: {username}, Password: {password}\n")
-
-    return jsonify({"message": "Login successful"}), 200
+# @app.route("/login", methods=["POST"])
+# def login():
 
 
-@app.route("/signup", methods=["POST"])
-def signup():
-    # Extract signup information from the request
-    username = request.form.get("username")
-    password = request.form.get("password")
-
-    # Check if the username already exists
-    if check_existing_user(username):
-        return (
-            jsonify(
-                {
-                    "message": "Username already exists. Please choose a different username."
-                }
-            ),
-            400,
-        )
-
-    # Write signup information to the file
-    with open("login_info.txt", "a") as f:
-        f.write(f"Username: {username}, Password: {password}\n")
-
-    return jsonify({"message": "Signup successful"}), 200
+# @app.route("/signup", methods=["POST"])
+# def signup():
 
 
 @app.route("/askgpt", methods=["GET", "POST"])
