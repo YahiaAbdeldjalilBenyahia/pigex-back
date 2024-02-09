@@ -12,9 +12,9 @@ from langchain_openai import ChatOpenAI
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
 
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
 
 load_dotenv()
-
 
 key = os.getenv("OPENAI_API_KEY")
 from openai import OpenAI
@@ -22,12 +22,12 @@ from openai import OpenAI
 client = OpenAI()
 
 app = Flask(__name__)
-CORS(app, origins=["http://localhost:5173"])
+CORS(app, origins="http://localhost:5173")
 
 # TODO: LOGIN AND SIGNUP
+llm = ChatOpenAI(openai_api_key=key)
 
 system_msg = "You are an expert data analyst."
-prompt = "Suggest some data analysis questions and ideas about the dataset for feature engineering. Do not write code."
 
 
 # @app.route("/")
@@ -52,24 +52,27 @@ prompt = "Suggest some data analysis questions and ideas about the dataset for f
 # def signup():
 
 
-@app.route("/askgpt", methods=["GET", "POST"])
+@app.route("/chainify", methods=["POST"])
 def askgpt():
-    req = request.get_json()
+    req = request.json
+    print("REQ:", req)
     if not req:  # Check if data is present
         return jsonify({"error": "No data found in the request"}), 400
     data_description = req["dataDescription"]
     data = req["data"]
-    humanMessage = truncate_string(f"{data_description}\n{data}\n{prompt}", 4097)
-    msgs_suggest_questions = [
-        SystemMessage(content=system_msg),
-        HumanMessage(content=humanMessage),
-    ]
-    msgs_suggest_questions = [("system", system_msg), ("user", humanMessage)]
-    chat = ChatOpenAI()
+    humanMessage = truncate_string(
+        f"{data_description}\n{data}\n Help me analyse this data. do not write code.",
+        4097,
+    )
 
-    chat.invoke(msgs_suggest_questions)
-    rsrs_suggest_questions = chat(msgs_suggest_questions)
-    return rsrs_suggest_questions.content
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", system_msg), ("user", "{input}")]
+    )
+
+    chain = prompt | llm | StrOutputParser()
+    response = chain.invoke({"input": humanMessage})
+
+    return response
 
 
 def truncate_string(s, max_length):
