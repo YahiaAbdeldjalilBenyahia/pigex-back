@@ -11,6 +11,8 @@ import langchain as lc
 from langchain_openai import ChatOpenAI
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
 
+from langchain_core.prompts import ChatPromptTemplate
+
 load_dotenv()
 
 
@@ -25,7 +27,7 @@ CORS(app, origins=["http://localhost:5173"])
 # TODO: LOGIN AND SIGNUP
 
 system_msg = "You are an expert data analyst."
-prompt = "Suggest some data analysis questions and ideas about the dataset for feature engineering."
+prompt = "Suggest some data analysis questions and ideas about the dataset for feature engineering. Do not write code."
 
 
 # @app.route("/")
@@ -62,7 +64,10 @@ def askgpt():
         SystemMessage(content=system_msg),
         HumanMessage(content=humanMessage),
     ]
+    msgs_suggest_questions = [("system", system_msg), ("user", humanMessage)]
     chat = ChatOpenAI()
+
+    chat.invoke(msgs_suggest_questions)
     rsrs_suggest_questions = chat(msgs_suggest_questions)
     return rsrs_suggest_questions.content
 
