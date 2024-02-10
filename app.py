@@ -29,6 +29,7 @@ llm = ChatOpenAI(openai_api_key=key)
 
 system_msg = "You are an expert data analyst."
 
+prompt = ChatPromptTemplate.from_messages([("system", system_msg), ("user", "{input}")])
 
 # @app.route("/")
 # def hello_world():
@@ -55,7 +56,6 @@ system_msg = "You are an expert data analyst."
 @app.route("/chainify", methods=["POST"])
 def askgpt():
     req = request.json
-    print("REQ:", req)
     if not req:  # Check if data is present
         return jsonify({"error": "No data found in the request"}), 400
     data_description = req["dataDescription"]
@@ -65,11 +65,10 @@ def askgpt():
         4097,
     )
 
-    prompt = ChatPromptTemplate.from_messages(
-        [("system", system_msg), ("user", "{input}")]
-    )
+    chain = prompt | llm
+    output_parser = StrOutputParser()
+    chain = prompt | llm | output_parser
 
-    chain = prompt | llm | StrOutputParser()
     response = chain.invoke({"input": humanMessage})
 
     return response
