@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-
+import flask
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required
 from itsdangerous import URLSafeTimedSerializer
 
@@ -16,7 +16,7 @@ from langchain_core.output_parsers import StrOutputParser
 
 load_dotenv()
 
-key = os.getenv("OPENAI_API_KEY")
+key = "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"
 from openai import OpenAI
 
 client = OpenAI()
@@ -68,9 +68,13 @@ def askgpt():
     chain = prompt | llm
     output_parser = StrOutputParser()
     chain = prompt | llm | output_parser
+    response = flask.Response()
 
-    response = chain.invoke({"input": humanMessage})
-
+    response.data = chain.invoke({"input": humanMessage})
+    response.headers.set("Access-Control-Allow-Origin", "*")
+    response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+    response.headers.add("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS")
+    response.headers.add("Access-Control-Allow-Credentials", "true")
     return response
 
 
